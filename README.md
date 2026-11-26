@@ -50,7 +50,9 @@ docker compose up -d --build
 - **Volumen persistente:** `jenkins_entrega2_home` guarda jobs, historial y credenciales.
 - **Disparo automático:** Poll SCM cada ~2 minutos (`H/2 * * * *`); cada commit en `main` dispara un build.
 
-Etapas del `Jenkinsfile`: **Revisar API** (contenedor efímero `node:20.18.1-alpine3.20`) → **Preparar entorno** (`.env` con la credencial) → **Construir imágenes** (`entrega3-app:N` y `entrega3-db:N`) → **Levantar contenedores** → **Prueba de comunicación**. Al final siempre apaga y borra los contenedores del build.
+Etapas del `Jenkinsfile`: **Revisar API** (contenedor efímero `node:20.18.1-alpine3.20`) → **Preparar entorno** (`.env` con la credencial) → **Construir imágenes** (`entrega3-app:N` y `entrega3-db:N`) → **Levantar contenedores** → **Prueba de comunicación** (curl app → db → app; cada paso es un caso del reporte JUnit que Jenkins muestra en *Test Result*). Al final siempre apaga y borra los contenedores del build.
+
+> En macOS, si la ruta del proyecto tiene tildes, `docker compose build` puede pedir `--allow=fs.read=...`; se resuelve ejecutando antes `export BUILDX_BAKE_ENTITLEMENTS_FS=0`.
 
 ```bash
 cd jenkins && docker compose down      # apaga Jenkins (los datos quedan en el volumen)

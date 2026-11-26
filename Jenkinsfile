@@ -49,6 +49,7 @@ pipeline {
       steps {
         // El .env se arma con la contraseña de la credencial (Jenkins la oculta en el log)
         sh '''
+          rm -rf reportes
           sed "s/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=$DB_PASS/" .env.example > .env
           docker compose config --quiet
           echo "docker-compose.yml válido; proyecto $COMPOSE_PROJECT_NAME"
@@ -73,16 +74,20 @@ pipeline {
     }
     stage('Prueba de comunicación') {
       steps {
-        // Ida y vuelta app -> db -> app con curl; el reporte queda como artefacto del build
+        // Ida y vuelta app -> db -> app con curl. Cada paso es un caso de prueba del
+        // reporte JUnit; la salida completa queda como artefacto del build
         sh '''
           mkdir -p reportes
-          sh scripts/prueba-comunicacion.sh > reportes/prueba-comunicacion.txt 2>&1 && rc=0 || rc=$?
+          JUNIT=reportes/prueba-comunicacion.xml sh scripts/prueba-comunicacion.sh > reportes/prueba-comunicacion.txt 2>&1 && rc=0 || rc=$?
           cat reportes/prueba-comunicacion.txt
           exit $rc
         '''
       }
       post {
-        always { archiveArtifacts artifacts: 'reportes/*.txt', allowEmptyArchive: true }
+        always {
+          junit allowEmptyResults: true, testResults: 'reportes/*.xml'
+          archiveArtifacts artifacts: 'reportes/*', allowEmptyArchive: true
+        }
       }
     }
   }
