@@ -1,0 +1,60 @@
+# Configuration as Code: Jenkins listo sin asistente de instalación
+jenkins:
+  systemMessage: "Jenkins - Entrega proyecto 2 (Integración Continua). Pipeline de los contenedores de la Entrega 1."
+  numExecutors: 2   # en producción: 0 en el controlador y builds en agentes
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "${JENKINS_ADMIN_ID:-estudiante}"
+          password: "${JENKINS_ADMIN_PASSWORD:-cambiar-esta-clave}"
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+
+# Credenciales: la contraseña de PostgreSQL se guarda cifrada en Jenkins y el
+# Jenkinsfile la usa con credentials('notas-db-password'); nunca va en el repositorio
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          - string:
+              scope: GLOBAL
+              id: "notas-db-password"
+              description: "Contraseña de PostgreSQL (contenedor db) para el pipeline"
+              secret: "${NOTAS_DB_PASSWORD}"
+
+unclassified:
+  location:
+    url: "http://localhost:8081/"
+
+# Job del pipeline creado como código (plugin Job DSL): toma el Jenkinsfile del
+# repositorio de GitHub y revisa el repositorio cada ~2 minutos (Poll SCM)
+jobs:
+  - script: >
+      pipelineJob('notas-pipeline') {
+        description('Pipeline de la Entrega proyecto 2: construye y prueba los dos contenedores de la Entrega 1')
+        properties {
+          pipelineTriggers {
+            triggers {
+              pollSCM {
+                scmpoll_spec('H/2 * * * *')
+              }
+            }
+          }
+        }
+        definition {
+          cpsScm {
+            scm {
+              git {
+                remote {
+                  url('https://github.com/edwardBernal2026/IntegracionContinuaEntrega4.git')
+                }
+                branch('*/main')
+              }
+            }
+            scriptPath('Jenkinsfile')
+            lightweight(true)
+          }
+        }
+      }

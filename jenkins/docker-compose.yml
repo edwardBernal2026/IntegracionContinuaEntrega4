@@ -1,0 +1,27 @@
+# Levantar:  docker compose up -d --build     Apagar: docker compose down
+services:
+  jenkins:
+    build: .
+    image: jenkins-entrega2:lts
+    container_name: jenkins-entrega2
+    ports:
+      # Interfaz web. En este equipo el 8080 ya está ocupado, por eso se publica en el 8081.
+      - "8081:8080"
+      # El 50000 (agentes JNLP) no se publica: todos los builds corren en el controlador.
+    environment:
+      JAVA_OPTS: -Djenkins.install.runSetupWizard=false
+      JENKINS_ADMIN_ID: ${JENKINS_ADMIN_ID:-estudiante}
+      JENKINS_ADMIN_PASSWORD: ${JENKINS_ADMIN_PASSWORD:-cambiar-esta-clave}
+      NOTAS_DB_PASSWORD: ${NOTAS_DB_PASSWORD:-cambie_esta_contrasena}
+    volumes:
+      # Volumen persistente: jobs, historial de builds, plugins y credenciales
+      - jenkins_home:/var/jenkins_home
+      # Jenkins usa el Docker del equipo anfitrión ("Docker outside of Docker")
+      - /var/run/docker.sock:/var/run/docker.sock
+    group_add:
+      - "0"
+    restart: unless-stopped
+
+volumes:
+  jenkins_home:
+    name: jenkins_entrega2_home
