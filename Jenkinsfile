@@ -73,7 +73,16 @@ pipeline {
     }
     stage('Prueba de comunicación') {
       steps {
-        sh 'sh scripts/prueba-comunicacion.sh'
+        // Ida y vuelta app -> db -> app con curl; el reporte queda como artefacto del build
+        sh '''
+          mkdir -p reportes
+          sh scripts/prueba-comunicacion.sh > reportes/prueba-comunicacion.txt 2>&1 && rc=0 || rc=$?
+          cat reportes/prueba-comunicacion.txt
+          exit $rc
+        '''
+      }
+      post {
+        always { archiveArtifacts artifacts: 'reportes/*.txt', allowEmptyArchive: true }
       }
     }
   }
