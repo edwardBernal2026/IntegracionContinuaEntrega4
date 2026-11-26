@@ -38,7 +38,7 @@ services:
       - path: .env
         required: false
     environment:
-      DB_HOST: db            # nombre del servicio dentro de la red de Docker
+      DB_HOST: localhost     # ERROR a propósito: dentro del contenedor, localhost es el propio contenedor app
       DB_PORT: 5432
       APP_PORT: 3000
     ports:
