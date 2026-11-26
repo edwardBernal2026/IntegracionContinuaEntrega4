@@ -31,7 +31,7 @@ app.get('/health', async (_req, res) => {
 
 // Guardar una nota (escritura en el contenedor 2)
 app.post('/notas', async (req, res) => {
-  const { text: texto } = req.body || {}; // ERROR a propósito: el cliente envía "texto", no "text"
+  const { texto } = req.body || {};
   if (!texto || typeof texto !== 'string') {
     return res.status(400).json({ error: 'El campo "texto" es obligatorio' });
   }
